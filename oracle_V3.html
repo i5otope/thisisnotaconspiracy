@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>thisisnotaconspiracy</title>
+  <link rel="icon" type="image/x-icon" href="oracle_favicon.png">
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      background: #fff;
+    }
+    .center-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      position: relative;
+    }
+    .logo-container {
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    .logo-container img {
+      max-width: 250px;
+      height: auto;
+    }
+    .search-container {
+      width: 575px;
+      max-width: 90vw;
+      height: 210px;
+    }
+    .search-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 14px 48px;
+      font-size: 16px;
+      font-weight: normal;
+      border: 1px solid #bbb;
+      border-radius: 24px;
+      outline: none;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
+      background: #fff;
+    }
+    .search-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      fill: #888;
+      pointer-events: none;
+    }
+    .autocomplete-box {
+      margin-top: 8px;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 24px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+    }
+    .autocomplete-header {
+      padding: 10px 16px;
+      font-size: 12px;
+      color: #5f6368;
+      border-bottom: 1px solid #e0e0e0;
+      font-style: italic;
+    }
+    .autocomplete-item {
+      padding: 12px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      font-weight: normal;
+    }
+    .autocomplete-item:hover {
+      background-color: #f1f3f4;
+    }
+    .report-footer {
+      padding: 10px 16px;
+      font-size: 12px;
+      color: #5f6368;
+      border-top: 1px solid #e0e0e0;
+      text-align: right;
+    }
+    .report-footer a {
+      color: #5f6368;
+      text-decoration: none;
+    }
+    .report-footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+  <script src="https://unpkg.com/compromise"></script>
+</head>
+<body>
+  <div class="center-wrapper">
+    <div class="logo-container">
+      <img src="oracle_logo.png" alt="Oracle Logo">
+    </div>
+    <div class="search-container">
+      <div class="search-wrapper">
+        <svg class="search-icon" viewBox="0 0 24 24">
+          <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16a6.471 6.471 0 004.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zM10 14a4 4 0 110-8 4 4 0 010 8z"/>
+        </svg>
+        <input type="text" placeholder="Seek, and ye shall find..." oninput="showAutocomplete(this.value)" id="searchInput" />
+      </div>
+      <div id="autocompleteList" class="autocomplete-box" style="display: none;"></div>
+    </div>
+  </div>
+
+  <script>
+    const templates = {
+      Noun: [
+        "was inscribed in the scrolls of {place}",
+        "was cursed by {creature} in {location}",
+        "was whispered in the prayers of {prophet}",
+        "was denied entry to {heaven}",
+        "was worshipped during the rites of {cult}",
+        "was found etched into the bones of {beast}",
+        "was feared by the emperors of {empire}",
+        "was the echo beneath the temple of {god}",
+        "is condemned by the seventh council of {order}",
+        "was offered to {deity} in the year of {omen}"
+      ],
+      Verb: [
+        "to open the gates of {place}",
+        "to awaken the wrath of {creature}",
+        "to fulfill the forgotten prophecy of {prophet}",
+        "to carve fate into the stone of {temple}",
+        "to echo in the dreams of {king}",
+        "to unlock the tongue of {oracle}",
+        "to summon the plague of {curse}",
+        "to rattle the chains of {underworld}",
+        "to burn the sigils of {religion}",
+        "to silence the prayers of {heretics}"
+      ],
+      Adjective: [
+        "as declared by the cult of {deity}",
+        "as foretold in the mirror of {witch}",
+        "as carved by the mad monks of {monastery}",
+        "as sealed in the vault of {church}",
+        "as feared by the tyrants of {empire}",
+        "as born in the fire of {rebellion}",
+        "as buried in the chants of {choir}",
+        "as heard in the silence of {catacomb}",
+        "as read by the last priest of {sect}",
+        "as sworn in the blood of {martyr}"
+      ]
+    };
+
+    const words = {
+      place: ["Babylon", "Delphi", "Mecca", "Jerusalem", "Atlantis", "Constantinople"],
+      creature: ["the Leviathan", "the Pale Rider", "the Basilisk", "the Seraphim"],
+      location: ["the underworld", "the ninth circle", "the abyss", "the astral plane"],
+      prophet: ["Nostradamus", "Elijah", "the Oracle of Delphi", "John the Seer"],
+      heaven: ["Elysium", "Paradise", "Valhalla", "Zion"],
+      cult: ["the Iron Veil", "the Crimson Sun", "the Order of Silence"],
+      beast: ["giants", "dragons", "archangels", "djinn"],
+      empire: ["Rome", "Byzantium", "Ur", "Babylon"],
+      god: ["Zeus", "Allah", "Baal", "The Machine God"],
+      order: ["the Templars", "the Illuminated Ones", "the Silent Choir"],
+      omen: ["Ashes", "Mirrors", "Blood", "Oblivion"],
+      temple: ["Solomon", "Osiris", "the Oracle", "the All-Seeing Eye"],
+      king: ["Solomon", "Gilgamesh", "Nebuchadnezzar", "Alexander"],
+      oracle: ["Sibyl", "Pythia", "the Veiled One", "the Last Voice"],
+      curse: ["Cain", "the Red Sky", "the Plague Star", "the Fifth Age"],
+      underworld: ["Sheol", "Hades", "Naraka", "Duat"],
+      religion: ["Zoroastrianism", "the Faith of Fire", "the Hollow Creed", "Neo-Catholicism"],
+      heretics: ["the Veiled", "the Burned Tongue", "the Second Choir"],
+      deity: ["Marduk", "Lucifer", "Ishtar", "the Omnissiah"],
+      witch: ["Circe", "Morgana", "the Hexed Virgin", "Lilith"],
+      monastery: ["Ashfall", "the Deep Cloister", "Nox", "the Mirror Order"],
+      church: ["Saint Black", "the Wound Cathedral", "the Last Dome", "Vox Dei"],
+      rebellion: ["the Crimson Flame", "the Brass Uprising", "the Shadow March"],
+      choir: ["Eclipse", "Bonesong", "the Lost Psalm", "the Wailing Host"],
+      catacomb: ["San Veritas", "Ur-Tomb", "Sepulcrum", "the Hollow Vault"],
+      sect: ["Ash Tongues", "the Last Scripture", "the Ghost Creed"],
+      martyr: ["Saint Ash", "the Burning Prophet", "Judas II", "the Veiled Saint"]
+    };
+
+    function fillTemplate(template) {
+      return template.replace(/\{(.*?)\}/g, (_, key) => {
+        const options = words[key];
+        return options[Math.floor(Math.random() * options.length)];
+      });
+    }
+
+    function getPOS(text) {
+      const doc = nlp(text);
+      const last = doc.terms().last().terms(0);
+      if (last.has('#Verb')) return 'Verb';
+      if (last.has('#Adjective')) return 'Adjective';
+      return 'Noun';
+    }
+
+    function getSmartSuggestions(input) {
+      const base = input.trim();
+      const pos = getPOS(base);
+      const suffixes = templates[pos] || templates["Noun"];
+      const seen = new Set();
+      const results = [];
+
+      while (results.length < 5 && seen.size < 20) {
+        const suffix = fillTemplate(suffixes[Math.floor(Math.random() * suffixes.length)]);
+        const suggestion = base + " " + suffix;
+        if (!seen.has(suggestion)) {
+          seen.add(suggestion);
+          results.push(suggestion);
+        }
+      }
+
+      return results;
+    }
+
+    function showAutocomplete(input) {
+      const list = document.getElementById('autocompleteList');
+      list.innerHTML = '';
+
+      if (!input.trim()) {
+        list.style.display = 'none';
+        return;
+      }
+
+      const header = document.createElement('div');
+      header.className = 'autocomplete-header';
+      header.textContent = 'Based on your karmic alignment:';
+      list.appendChild(header);
+
+      const suggestions = getSmartSuggestions(input);
+      suggestions.forEach(suggestion => {
+        const item = document.createElement('div');
+        item.className = 'autocomplete-item';
+        item.innerHTML = `${input.trim()}&nbsp;<strong>${suggestion.slice(input.trim().length + 1)}</strong>`;
+        item.onclick = () => {
+          const url = 'https://www.google.com/search?q=' + encodeURIComponent(suggestion);
+          window.open(url, '_self');
+        };
+        list.appendChild(item);
+      });
+
+      const footer = document.createElement('div');
+      footer.className = 'report-footer';
+      footer.innerHTML = '<a href="#">Report blasphemy</a>';
+      list.appendChild(footer);
+
+      list.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
